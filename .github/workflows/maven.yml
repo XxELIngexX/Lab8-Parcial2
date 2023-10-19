@@ -23,8 +23,3 @@ jobs:
     - name: Build with Maven
       run: mvn clean verify
  
-    - name: Test Report
-      uses: actions/upload-artifact@v3
-      if: success() || failure()
-      with:
-          name: SpringBoot Report               # Name of the folder 
