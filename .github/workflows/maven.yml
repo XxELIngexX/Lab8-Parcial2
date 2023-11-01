@@ -9,7 +9,7 @@ on:
 jobs:
   build:
  
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
  
     steps:
     - uses: actions/checkout@v3
@@ -22,10 +22,16 @@ jobs:
     
     - name: Build with Maven
       run: mvn compile
+    - name: Upload artifact for deployment job
+      uses: actions/upload-artifact@v3
+      with:
+          name: java-app
+          path: '${{ github.workspace }}/target/*.jar'
+      
       
   test:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
  
     steps:
     - uses: actions/checkout@v3
@@ -40,16 +46,22 @@ jobs:
       run: mvn verify
   deploy:
      needs: test
-     runs-on: ubuntu-latest
+     runs-on: windows-latest
+     environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }
  
      steps:
-     - uses: actions/checkout@v3
-     - name: Set up JDK 17
-       uses: actions/setup-java@v3
-       with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: maven
-    
-     - name: Build with Maven
-       run: echo "In construction"
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: java-app
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'Laboratorio8AmayaZamora'
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_CA61503884194D2194F1554E65B95A9F }}
+          package: '*.jar'
